@@ -23,6 +23,8 @@
         </mvc:message-converters>
     </mvc:annotation-driven>
 
+    <context:component-scan base-package="ru.javawebinar.**.converters"/>
+
     <context:component-scan base-package="ru.javawebinar.**.web"/>
 
     <!--  all resources inside folder src/main/webapp/resources are mapped so they can be referred to inside JSP files -->
@@ -49,4 +51,20 @@
         <property name="basenames" value="file:///#{systemEnvironment['TOPJAVA_ROOT']}/config/messages/app"/>
         <property name="fallbackToSystemLocale" value="false"/>
     </bean>
+
+    <mvc:annotation-driven conversion-service="conversionService" />
+
+    <bean id="conversionService" class="ru.javawebinar.topjava.converters.MyFormattingConversionServiceFactoryBean">
+    </bean>
+
+    <!--<bean id="customConversionService" class="ru.javawebinar.topjava.converters.MyFormattingConversionServiceFactoryBean" parent="conversionService">-->
+        <!--<property name="converters">-->
+            <!--<set merge="true">-->
+                <!--<bean class="ru.javawebinar.topjava.converters.LocalDateConverter"/>-->
+                <!--<bean class="ru.javawebinar.topjava.converters.LocalTimeConverter"/>-->
+            <!--</set>-->
+        <!--</property>-->
+    <!--</bean>-->
+
+
 </beans>
