@@ -3,10 +3,6 @@ function makeEditable() {
         deleteRow($(this).parent().parent().attr("id"));
     });
 
-    $(".change-status").click(function () {
-        changeStatus($(this).parent().parent().attr("id"), $(this).is(":checked"));
-    });
-
     $("#detailsForm").submit(function () {
         save();
         return false;
@@ -18,7 +14,21 @@ function makeEditable() {
 
     // solve problem with cache in IE: https://stackoverflow.com/a/4303862/548473
     $.ajaxSetup({cache: false});
+
+    $("#cleanFilterFormButton").click(function () {
+        cleanForm();
+    });
+
+    $("#filterForm").submit(function () {
+        updateTable();
+        return false;
+    });
 }
+
+function cleanForm() {
+    $("#filterForm").trigger("reset");
+}
+
 
 function add() {
     $("#detailsForm").find(":input").val("");
@@ -36,22 +46,16 @@ function deleteRow(id) {
     });
 }
 
-function changeStatus(id, enabled) {
-    var changeStatusObject = {"id": id, "enabled": enabled}
-    $.ajax({
-        type: "POST",
-        url: ajaxUrl + "change-status",
-        data: $.param(changeStatusObject),
-        success: function () {
-            updateTable();
-            successNoty("Status changed");
-        }
-    });
-}
-
 function updateTable() {
-    $.get(ajaxUrl, function (data) {
-        datatableApi.clear().rows.add(data).draw();
+    var form = $("#filterForm");
+    $.ajax({
+        type: "GET",
+        url: ajaxUrl + "filter",
+        data: form.serialize(),
+        success: function (data) {
+            datatableApi.clear().rows.add(data).draw();
+            successNoty("Filtered");
+        }
     });
 }
 
