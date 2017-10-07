@@ -1,7 +1,9 @@
 package ru.javawebinar.topjava.web.user;
 
 import org.junit.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.test.web.servlet.ResultActions;
 import ru.javawebinar.topjava.TestUtil;
 import ru.javawebinar.topjava.model.Role;
@@ -81,18 +83,28 @@ public class AdminRestControllerTest extends AbstractControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    @Test
-    public void testUpdate() throws Exception {
-        User updated = new User(USER);
-        updated.setName("UpdatedName");
-        updated.setRoles(Collections.singletonList(Role.ROLE_ADMIN));
-        mockMvc.perform(put(REST_URL + USER_ID)
+    @Test(expected = DataIntegrityViolationException.class)
+    public void testUpdateUniqueEmailConstraintException() throws Exception {
+        ResultActions resultActions = mockMvc.perform(put(REST_URL + USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .with(userHttpBasic(ADMIN))
-                .content(JsonUtil.writeValue(updated)))
+                .content(JSON_UPDATE_USER_WITH_PASSWORD_CONSTRAINT_EXCEPTION));
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+    }
+
+    @Test
+    public void testUpdate() throws Exception {
+        ResultActions resultActions = mockMvc.perform(put(REST_URL + USER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(userHttpBasic(ADMIN))
+                .content(JSON_UPDATE_USER_WITH_PASSWORD))
                 .andExpect(status().isOk());
 
-        MATCHER.assertEquals(updated, userService.get(USER_ID));
+        User returned = JsonUtil.readValue(JSON_UPDATE_USER_WITH_PASSWORD, User.class);
+
+        MATCHER.assertEquals(returned, userService.get(USER_ID));
     }
 
     @Test
@@ -107,6 +119,27 @@ public class AdminRestControllerTest extends AbstractControllerTest {
 
         MATCHER.assertEquals(NEW_USER, returned);
         MATCHER.assertListEquals(Arrays.asList(ADMIN, NEW_USER, USER), userService.getAll());
+    }
+
+    @Test
+    public void testCreateNotValid() throws Exception {
+        User created = new User();
+        ResultActions action = mockMvc.perform(post(REST_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(userHttpBasic(ADMIN))
+                .content(JsonUtil.writeValue(created))).andExpect(status().is(422));
+    }
+
+    @Test
+    public void testUpdateNotValid() throws Exception {
+        User updated = new User(USER);
+        updated.setId(USER.getId());
+        updated.setRoles(Collections.singletonList(Role.ROLE_ADMIN));
+        mockMvc.perform(put(REST_URL + USER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(userHttpBasic(ADMIN))
+                .content(JsonUtil.writeValue(updated)))
+                .andExpect(status().is(422));
     }
 
     @Test

@@ -19,6 +19,14 @@
                     </button>
                 </sec:authorize>
             </form:form>
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">
+                    <spring:message code="app.choose_language"/></button>
+                <ul class="dropdown-menu">
+                    <li><a href="?language=en">English</a></li>
+                    <li><a href="?language=ru">Русский</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
